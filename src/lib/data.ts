@@ -24,7 +24,7 @@ export const CHAPTERS: Record<string, { name: string; acc: number }[]> = {
     { name: "Coordinate Geometry", acc: 63 },
   ],
 };
-export const chaptersFor = (s: string) => CHAPTERS[s] ?? CHAPTERS.Science;
+export const chaptersFor = (s: string) => CHAPTERS[s] ?? CHAPTERS["Science"]!;
 
 export type Q = {
   id: number; type: string; difficulty: "Easy" | "Medium" | "Hard"; chapter: string;

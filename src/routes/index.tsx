@@ -32,7 +32,7 @@ function Index() {
   const [board, setBoard] = useState("CBSE");
   const [cls, setCls] = useState("10");
   const [subj, setSubj] = useState("Science");
-  const subjects = SUBJECTS[cls];
+  const subjects = SUBJECTS[cls] ?? [];
 
   return (
     <main className="relative z-10 mx-auto max-w-6xl px-4">
@@ -59,7 +59,7 @@ function Index() {
           <p className="mt-5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Board</p>
           <div className="mt-2 flex flex-wrap gap-2">{BOARDS.map((b) => <Chip key={b} active={board === b} onClick={() => setBoard(b)}>{b}</Chip>)}</div>
           <p className="mt-5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Class</p>
-          <div className="mt-2 flex flex-wrap gap-2">{CLASSES.map((c) => <Chip key={c} tone="brand2" active={cls === c} onClick={() => { setCls(c); setSubj(SUBJECTS[c][0]); }}>{c}</Chip>)}</div>
+          <div className="mt-2 flex flex-wrap gap-2">{CLASSES.map((c) => <Chip key={c} tone="brand2" active={cls === c} onClick={() => { setCls(c); setSubj(SUBJECTS[c]?.[0] ?? ""); }}>{c}</Chip>)}</div>
           <p className="mt-5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Subject</p>
           <div className="mt-2 flex flex-wrap gap-2">{subjects.map((s) => <Chip key={s} tone="sky" active={subj === s} onClick={() => setSubj(s)}>{s}</Chip>)}</div>
           <Link to="/dashboard" search={{ board, cls, subject: subj }} className="mt-6 block rounded-2xl bg-gradient-brand py-3.5 text-center text-sm font-semibold text-on-brand shadow-xl shadow-brand/30">
