@@ -2,13 +2,13 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { chaptersFor } from "@/lib/data";
 import { Bar, Page, Stat } from "@/components/site";
 
-type Search = { board?: string; cls?: string; subject?: string };
+type Search = { board?: string | undefined; cls?: string | undefined; subject?: string | undefined };
 
 export const Route = createFileRoute("/dashboard")({
   validateSearch: (s: Record<string, unknown>): Search => ({
-    board: typeof s.board === "string" ? s.board : undefined,
-    cls: typeof s.cls === "string" ? s.cls : undefined,
-    subject: typeof s.subject === "string" ? s.subject : undefined,
+    board: typeof s["board"] === "string" ? s["board"] : undefined,
+    cls: typeof s["cls"] === "string" ? s["cls"] : undefined,
+    subject: typeof s["subject"] === "string" ? s["subject"] : undefined,
   }),
   head: () => ({
     meta: [
@@ -68,8 +68,8 @@ function Dashboard() {
               </div>
             ))}
             <div className="glass-soft rounded-2xl p-4">
-              <p className="text-sm font-semibold">✅ {strong[0].name} quick revision</p>
-              <p className="text-xs text-muted-foreground">Lock in {strong[0].acc}%</p>
+              <p className="text-sm font-semibold">✅ {strong[0]!.name} quick revision</p>
+              <p className="text-xs text-muted-foreground">Lock in {strong[0]!.acc}%</p>
               <Link to="/pyqs" className="mt-3 block rounded-xl bg-mint py-2 text-center text-xs font-semibold text-on-brand">Review PYQs →</Link>
             </div>
           </div>

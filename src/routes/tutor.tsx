@@ -22,7 +22,7 @@ function reply(mode: string, topic: string) {
 }
 
 function Tutor() {
-  const [mode, setMode] = useState(MODES[0]);
+  const [mode, setMode] = useState<string>(MODES[0]!);
   const [input, setInput] = useState("");
   const [msgs, setMsgs] = useState<{ me: boolean; text: string }[]>([
     { me: false, text: "Hi Riya 👋 Pick a mode and ask me about any chapter — e.g. “Carbon Compounds”." },

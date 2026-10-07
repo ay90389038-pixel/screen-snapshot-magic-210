@@ -28,7 +28,7 @@ function Practice() {
   const choose = (k: number) => {
     if (picked !== null) return;
     setPicked(k);
-    setScore((s) => ({ right: s.right + (k === q.answer ? 1 : 0), done: s.done + 1 }));
+    setScore((s) => ({ right: s.right + (k === q?.answer ? 1 : 0), done: s.done + 1 }));
   };
   const next = () => { setPicked(null); setI((i + 1) % list.length); };
 
