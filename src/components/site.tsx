@@ -6,8 +6,11 @@ const NAV = [
   { to: "/dashboard", label: "Dashboard" },
   { to: "/practice", label: "Practice" },
   { to: "/pyqs", label: "PYQs" },
+  { to: "/notes", label: "Notes" },
+  { to: "/analytics", label: "Analyse" },
+  { to: "/parents", label: "Parents" },
   { to: "/tutor", label: "AI Tutor" },
-  { to: "/updates", label: "Board Updates" },
+  { to: "/updates", label: "Updates" },
 ] as const;
 
 export function Logo() {
