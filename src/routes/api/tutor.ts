@@ -8,7 +8,7 @@ export const Route = createFileRoute("/api/tutor")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const key = process.env.LOVABLE_API_KEY;
+        const key = process.env["LOVABLE_API_KEY"];
         if (!key) return new Response("AI is not configured.", { status: 500 });
         const { mode, messages } = (await request.json()) as { mode: string; messages: Msg[] };
         const provider = createOpenAICompatible({
