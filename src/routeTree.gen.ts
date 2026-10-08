@@ -15,6 +15,7 @@ import { Route as PracticeRouteImport } from './routes/practice'
 import { Route as PyqsRouteImport } from './routes/pyqs'
 import { Route as TutorRouteImport } from './routes/tutor'
 import { Route as UpdatesRouteImport } from './routes/updates'
+import { Route as ApiTutorRouteImport } from './routes/api/tutor'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -46,6 +47,11 @@ const UpdatesRoute = UpdatesRouteImport.update({
   path: '/updates',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiTutorRoute = ApiTutorRouteImport.update({
+  id: '/api/tutor',
+  path: '/api/tutor',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -54,6 +60,7 @@ export interface FileRoutesByFullPath {
   '/pyqs': typeof PyqsRoute
   '/tutor': typeof TutorRoute
   '/updates': typeof UpdatesRoute
+  '/api/tutor': typeof ApiTutorRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -62,6 +69,7 @@ export interface FileRoutesByTo {
   '/pyqs': typeof PyqsRoute
   '/tutor': typeof TutorRoute
   '/updates': typeof UpdatesRoute
+  '/api/tutor': typeof ApiTutorRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -71,12 +79,27 @@ export interface FileRoutesById {
   '/pyqs': typeof PyqsRoute
   '/tutor': typeof TutorRoute
   '/updates': typeof UpdatesRoute
+  '/api/tutor': typeof ApiTutorRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/dashboard' | '/practice' | '/pyqs' | '/tutor' | '/updates'
+  fullPaths:
+    | '/'
+    | '/dashboard'
+    | '/practice'
+    | '/pyqs'
+    | '/tutor'
+    | '/updates'
+    | '/api/tutor'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dashboard' | '/practice' | '/pyqs' | '/tutor' | '/updates'
+  to:
+    | '/'
+    | '/dashboard'
+    | '/practice'
+    | '/pyqs'
+    | '/tutor'
+    | '/updates'
+    | '/api/tutor'
   id:
     | '__root__'
     | '/'
@@ -85,6 +108,7 @@ export interface FileRouteTypes {
     | '/pyqs'
     | '/tutor'
     | '/updates'
+    | '/api/tutor'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -94,6 +118,7 @@ export interface RootRouteChildren {
   PyqsRoute: typeof PyqsRoute
   TutorRoute: typeof TutorRoute
   UpdatesRoute: typeof UpdatesRoute
+  ApiTutorRoute: typeof ApiTutorRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -140,6 +165,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UpdatesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/tutor': {
+      id: '/api/tutor'
+      path: '/api/tutor'
+      fullPath: '/api/tutor'
+      preLoaderRoute: typeof ApiTutorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -150,6 +182,7 @@ const rootRouteChildren: RootRouteChildren = {
   PyqsRoute: PyqsRoute,
   TutorRoute: TutorRoute,
   UpdatesRoute: UpdatesRoute,
+  ApiTutorRoute: ApiTutorRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
