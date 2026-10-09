@@ -351,6 +351,7 @@ function Lab() {
             {active.id === "ohm" && <OhmSim />}
             {active.id === "ph" && <PhSim />}
             {active.id === "micro" && <MicroSim />}
+            {active.id === "mix" && <MixSim />}
             <div className="glass rounded-3xl p-6">
               <h4 className="font-display text-lg font-semibold">My observation</h4>
               <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={3} placeholder="Write what you observed…" className="glass-soft mt-3 w-full rounded-xl px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-ring" />
