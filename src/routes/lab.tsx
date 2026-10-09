@@ -58,6 +58,21 @@ const EXPERIMENTS: Experiment[] = [
     ],
   },
   {
+    id: "mix",
+    subject: "Chemistry",
+    name: "Mix & React — Combine Two Substances",
+    board: "CBSE Class 10",
+    aim: "Combine any two substances and predict the reaction, equation and observation.",
+    materials: ["Virtual beaker", "Substance shelf (elements & compounds)", "Safety goggles (always!)"],
+    steps: [
+      "Pick the first substance from the shelf.",
+      "Pick a second substance to add to the beaker.",
+      "Watch the reaction and note the observation.",
+      "Balance the chemical equation shown.",
+      "Classify the reaction type (combination, displacement, etc.).",
+    ],
+  },
+  {
     id: "micro",
     subject: "Biology",
     name: "Onion Peel Cell under the Microscope",
