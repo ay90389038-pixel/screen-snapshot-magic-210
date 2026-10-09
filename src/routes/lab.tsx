@@ -105,6 +105,91 @@ const FOCUS_LABELS = [
   "In focus! You can see the cell wall, nucleus and vacuole.",
 ];
 
+const SUBSTANCES = [
+  { id: "na", name: "Sodium (Na)", kind: "Metal" },
+  { id: "cl2", name: "Chlorine (Cl₂)", kind: "Non-metal" },
+  { id: "h2", name: "Hydrogen (H₂)", kind: "Non-metal" },
+  { id: "o2", name: "Oxygen (O₂)", kind: "Non-metal" },
+  { id: "fe", name: "Iron (Fe)", kind: "Metal" },
+  { id: "s", name: "Sulphur (S)", kind: "Non-metal" },
+  { id: "mg", name: "Magnesium (Mg)", kind: "Metal" },
+  { id: "c", name: "Carbon (C)", kind: "Non-metal" },
+  { id: "zn", name: "Zinc (Zn)", kind: "Metal" },
+  { id: "hcl", name: "Dilute HCl", kind: "Acid" },
+  { id: "cuso4", name: "Copper sulphate (CuSO₄)", kind: "Salt solution" },
+  { id: "cao", name: "Quicklime (CaO)", kind: "Metal oxide" },
+  { id: "h2o", name: "Water (H₂O)", kind: "Compound" },
+] as const;
+
+type Reaction = { equation: string; observation: string; type: string; energy: string; colour: string };
+
+const REACTIONS: Record<string, Reaction> = {
+  "cl2|na": { equation: "2Na + Cl₂ → 2NaCl", observation: "Sodium burns with a bright yellow flame; white crystals of common salt form.", type: "Combination", energy: "Exothermic", colour: "#facc15" },
+  "h2|o2": { equation: "2H₂ + O₂ → 2H₂O", observation: "A loud 'pop' — hydrogen burns explosively and water vapour condenses.", type: "Combination", energy: "Highly exothermic", colour: "#60a5fa" },
+  "fe|s": { equation: "Fe + S → FeS", observation: "The mixture glows red-hot on heating; grey-black iron(II) sulphide forms.", type: "Combination", energy: "Exothermic", colour: "#78716c" },
+  "mg|o2": { equation: "2Mg + O₂ → 2MgO", observation: "Magnesium burns with a dazzling white flame, leaving white magnesium oxide ash.", type: "Combination (also oxidation)", energy: "Exothermic", colour: "#e7e5e4" },
+  "c|o2": { equation: "C + O₂ → CO₂", observation: "Carbon glows and burns; the gas produced turns limewater milky.", type: "Combination (combustion)", energy: "Exothermic", colour: "#a3a3a3" },
+  "hcl|zn": { equation: "Zn + 2HCl → ZnCl₂ + H₂↑", observation: "Brisk effervescence — hydrogen gas bubbles off; the gas burns with a pop.", type: "Displacement", energy: "Exothermic", colour: "#bae6fd" },
+  "cuso4|fe": { equation: "Fe + CuSO₄ → FeSO₄ + Cu", observation: "The blue solution turns pale green; a brown copper coating deposits on the iron.", type: "Displacement", energy: "Exothermic", colour: "#4ade80" },
+  "cao|h2o": { equation: "CaO + H₂O → Ca(OH)₂", observation: "The beaker gets very hot — quicklime slakes into slaked lime with hissing.", type: "Combination", energy: "Highly exothermic", colour: "#f5f5f4" },
+  "h2o|na": { equation: "2Na + 2H₂O → 2NaOH + H₂↑", observation: "Sodium darts on the water surface, melts into a ball and may catch fire.", type: "Displacement", energy: "Highly exothermic", colour: "#fdba74" },
+  "h2o|c": { equation: "C + H₂O → CO + H₂ (at high temp)", observation: "Red-hot carbon reacts with steam to form water gas.", type: "Displacement", energy: "Endothermic", colour: "#d6d3d1" },
+};
+
+function MixSim() {
+  const [a, setA] = useState<string | null>(null);
+  const [b, setB] = useState<string | null>(null);
+  const key = a && b ? [a, b].sort().join("|") : null;
+  const rxn = key ? REACTIONS[key] : undefined;
+  const both = a !== null && b !== null && a !== b;
+  const nameA = SUBSTANCES.find((s) => s.id === a)?.name;
+  const nameB = SUBSTANCES.find((s) => s.id === b)?.name;
+  return (
+    <div className="glass-soft rounded-2xl p-5">
+      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Pick two substances to combine</p>
+      <div className="mt-3 flex flex-wrap gap-2">
+        {SUBSTANCES.map((s) => (
+          <Chip key={s.id} active={a === s.id || b === s.id} tone="sky" onClick={() => {
+            if (a === s.id) setA(null);
+            else if (b === s.id) setB(null);
+            else if (a === null) setA(s.id);
+            else setB(s.id);
+          }}>{s.name}</Chip>
+        ))}
+      </div>
+      <div className="mt-5 flex flex-wrap items-center gap-4">
+        <div className="flex h-28 w-20 items-end justify-center rounded-b-full rounded-t-sm border-2 border-border transition-colors" style={{ background: both && rxn ? rxn.colour : "transparent" }}>
+          <span className="mb-2 rounded-full bg-white/85 px-2 py-0.5 text-[10px] font-bold text-neutral-900">
+            {both ? (rxn ? "Reacted!" : "No reaction") : "Beaker"}
+          </span>
+        </div>
+        <div className="min-w-56 flex-1">
+          {both ? (
+            rxn ? (
+              <>
+                <p className="font-display text-xl font-semibold">{rxn.equation}</p>
+                <p className="mt-2 text-sm text-muted-foreground">{rxn.observation}</p>
+                <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold">
+                  <span className="glass-soft rounded-full px-3 py-1">Type: {rxn.type}</span>
+                  <span className="glass-soft rounded-full px-3 py-1">{rxn.energy}</span>
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="font-display text-xl font-semibold">{nameA} + {nameB}</p>
+                <p className="mt-2 text-sm text-muted-foreground">No reaction under normal conditions — these two don't combine without special conditions (catalyst, high temperature, electrolysis).</p>
+              </>
+            )
+          ) : (
+            <p className="text-sm text-muted-foreground">Select {a === null ? "a first" : "a second"} substance from the shelf above. Try Sodium + Chlorine, or Zinc + Dilute HCl!</p>
+          )}
+        </div>
+      </div>
+      <p className="mt-4 text-xs text-muted-foreground">⚠️ Simulation only — many of these reactions are dangerous in real life. Never try them outside a supervised school lab.</p>
+    </div>
+  );
+}
+
 type Obs = { id: number; exp: string; text: string };
 const KEY = "topit-lab-log";
 
