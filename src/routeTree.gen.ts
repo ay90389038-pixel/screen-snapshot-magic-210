@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as LabRouteImport } from './routes/lab'
 import { Route as NotesRouteImport } from './routes/notes'
 import { Route as ParentsRouteImport } from './routes/parents'
 import { Route as PracticeRouteImport } from './routes/practice'
@@ -33,6 +34,11 @@ const AnalyticsRoute = AnalyticsRouteImport.update({
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LabRoute = LabRouteImport.update({
+  id: '/lab',
+  path: '/lab',
   getParentRoute: () => rootRouteImport,
 } as any)
 const NotesRoute = NotesRouteImport.update({
@@ -75,6 +81,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/analytics': typeof AnalyticsRoute
   '/dashboard': typeof DashboardRoute
+  '/lab': typeof LabRoute
   '/notes': typeof NotesRoute
   '/parents': typeof ParentsRoute
   '/practice': typeof PracticeRoute
@@ -87,6 +94,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/analytics': typeof AnalyticsRoute
   '/dashboard': typeof DashboardRoute
+  '/lab': typeof LabRoute
   '/notes': typeof NotesRoute
   '/parents': typeof ParentsRoute
   '/practice': typeof PracticeRoute
@@ -100,6 +108,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/analytics': typeof AnalyticsRoute
   '/dashboard': typeof DashboardRoute
+  '/lab': typeof LabRoute
   '/notes': typeof NotesRoute
   '/parents': typeof ParentsRoute
   '/practice': typeof PracticeRoute
@@ -114,6 +123,7 @@ export interface FileRouteTypes {
     | '/'
     | '/analytics'
     | '/dashboard'
+    | '/lab'
     | '/notes'
     | '/parents'
     | '/practice'
@@ -126,6 +136,7 @@ export interface FileRouteTypes {
     | '/'
     | '/analytics'
     | '/dashboard'
+    | '/lab'
     | '/notes'
     | '/parents'
     | '/practice'
@@ -138,6 +149,7 @@ export interface FileRouteTypes {
     | '/'
     | '/analytics'
     | '/dashboard'
+    | '/lab'
     | '/notes'
     | '/parents'
     | '/practice'
@@ -151,6 +163,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AnalyticsRoute: typeof AnalyticsRoute
   DashboardRoute: typeof DashboardRoute
+  LabRoute: typeof LabRoute
   NotesRoute: typeof NotesRoute
   ParentsRoute: typeof ParentsRoute
   PracticeRoute: typeof PracticeRoute
@@ -181,6 +194,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lab': {
+      id: '/lab'
+      path: '/lab'
+      fullPath: '/lab'
+      preLoaderRoute: typeof LabRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/notes': {
@@ -239,6 +259,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AnalyticsRoute: AnalyticsRoute,
   DashboardRoute: DashboardRoute,
+  LabRoute: LabRoute,
   NotesRoute: NotesRoute,
   ParentsRoute: ParentsRoute,
   PracticeRoute: PracticeRoute,
