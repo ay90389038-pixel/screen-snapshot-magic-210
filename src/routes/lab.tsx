@@ -137,7 +137,7 @@ function PhSim() {
         </div>
         <div>
           <p className="font-display text-xl font-semibold">{pick.name}</p>
-          <p className="mt-1 text-sm text-muted-foreground">Universal indicator turns <span className="font-semibold" style={{ color: pick.colour }}>{pick.colour}</span> → solution is <span className="font-semibold">{cls}</span>.</p>
+          <p className="mt-1 text-sm text-muted-foreground">Universal indicator turns <span className="inline-block h-3 w-3 rounded-full align-middle" style={{ background: pick.colour }} /> → solution is <span className="font-semibold">{cls}</span>.</p>
         </div>
       </div>
       <div className="mt-5 flex overflow-hidden rounded-full">
