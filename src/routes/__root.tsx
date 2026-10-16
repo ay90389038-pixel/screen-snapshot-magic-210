@@ -51,8 +51,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "TOPIT — Prepare Smarter. Score Better." },
-      { name: "description", content: "Board exam preparation ecosystem for Class 9–12." },
+      { title: "TOPIT | Class 10 & 12 Board Prep & Resources" },
+      { name: "description", content: "Prepare for Class 10 and 12 Board exams with TOPIT - previous year question papers, solutions, and sample papers." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
