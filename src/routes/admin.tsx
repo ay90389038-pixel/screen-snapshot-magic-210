@@ -9,11 +9,11 @@ import { addPaper, deletePaper, verifyAdmin } from "@/lib/admin.functions";
 export const Route = createFileRoute("/admin")({
   head: () => ({
     meta: [
-      { title: "Admin — Manage CBSE Papers | TOPIT" },
-      { name: "description", content: "Private admin panel to add and remove CBSE question papers." },
+      { title: "TOPIT Admin Portal" },
+      { name: "description", content: "Private TOPIT admin panel to add and remove CBSE question papers." },
       { name: "robots", content: "noindex" },
-      { property: "og:title", content: "Admin — Manage CBSE Papers | TOPIT" },
-      { property: "og:description", content: "Private admin panel for TOPIT papers." },
+      { property: "og:title", content: "TOPIT Admin Portal" },
+      { property: "og:description", content: "Private TOPIT admin portal for CBSE papers." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],

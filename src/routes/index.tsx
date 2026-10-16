@@ -6,10 +6,10 @@ import { Chip } from "@/components/site";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "TOPIT — Prepare Smarter. Score Better." },
-      { name: "description", content: "Complete Board Exam preparation ecosystem for Class 9–12: learn, practice, test, analyze and improve." },
-      { property: "og:title", content: "TOPIT — Prepare Smarter. Score Better." },
-      { property: "og:description", content: "Learn, practice, test, analyze and improve from one platform." },
+      { title: "TOPIT | Class 10 & 12 Board Prep & Resources" },
+      { name: "description", content: "Prepare for Class 10 and 12 Board exams with TOPIT - previous year question papers, solutions, and sample papers." },
+      { property: "og:title", content: "TOPIT | Class 10 & 12 Board Prep & Resources" },
+      { property: "og:description", content: "Prepare for Class 10 and 12 Board exams with TOPIT - previous year question papers, solutions, and sample papers." },
     ],
   }),
   component: Index,
