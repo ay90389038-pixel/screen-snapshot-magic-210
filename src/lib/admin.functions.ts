@@ -1,30 +1,26 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-type Ctx = { supabase: any; userId: string };
-
-// Only signed-in users with the 'admin' role may change papers.
-async function assertAdmin({ supabase, userId }: Ctx) {
-  const { data, error } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
-  if (error || !data) throw new Error("This account is not an admin");
+// Passcode is checked on the server so the browser can never write to the table directly.
+function checkPass(pass: string) {
+  const expected = process.env["ADMIN_PASSCODE"] || "admin123";
+  if (pass !== expected) throw new Error("Wrong passcode");
 }
 
-export const checkAdmin = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    const { data } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
-    return { isAdmin: !!data };
+export const verifyAdmin = createServerFn({ method: "POST" })
+  .inputValidator((d: { pass: string }) => d)
+  .handler(async ({ data }) => {
+    checkPass(data.pass);
+    return { ok: true };
   });
 
 type NewPaper = {
-  standard: "10" | "12"; subject: string; year: string;
+  pass: string; standard: "10" | "12"; subject: string; year: string;
   paper_type: "Board Paper" | "SQP"; set_number: string; paper_url: string; solution_url: string;
 };
 
 const isUrl = (u: string) => /^https?:\/\/\S+$/i.test(u);
 
 export const addPaper = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
   .inputValidator((d: NewPaper) => {
     if (!["10", "12"].includes(d.standard)) throw new Error("Invalid class");
     if (!["Board Paper", "SQP"].includes(d.paper_type)) throw new Error("Invalid type");
@@ -34,8 +30,8 @@ export const addPaper = createServerFn({ method: "POST" })
     if (d.solution_url.trim() && !isUrl(d.solution_url.trim())) throw new Error("Solution URL invalid");
     return d;
   })
-  .handler(async ({ data, context }) => {
-    await assertAdmin(context as Ctx);
+  .handler(async ({ data }) => {
+    checkPass(data.pass);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.from("cbse_pyqs").insert({
       standard: data.standard, subject: data.subject.trim(), year: data.year.trim(),
@@ -47,10 +43,9 @@ export const addPaper = createServerFn({ method: "POST" })
   });
 
 export const deletePaper = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((d: { id: string }) => d)
-  .handler(async ({ data, context }) => {
-    await assertAdmin(context as Ctx);
+  .inputValidator((d: { pass: string; id: string }) => d)
+  .handler(async ({ data }) => {
+    checkPass(data.pass);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.from("cbse_pyqs").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
