@@ -63,7 +63,7 @@ function Admin() {
   };
 
   if (!ok) return (
-    <Page title="Admin" sub="Enter the admin passcode to manage papers.">
+    <Page title="TOPIT Admin Access" sub="Enter the admin passcode to manage papers.">
       <form onSubmit={unlock} className="glass mx-auto flex max-w-sm flex-col gap-3 rounded-3xl p-6">
         <input type="password" value={pass} onChange={(e) => setPass(e.target.value)} placeholder="Passcode" className={field} autoFocus />
         <button className="bg-gradient-brand text-on-brand rounded-full px-5 py-2.5 text-sm font-semibold">Unlock</button>
@@ -74,7 +74,7 @@ function Admin() {
   const set = (k: keyof typeof empty) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setForm({ ...form, [k]: e.target.value });
 
   return (
-    <Page title="Admin — CBSE Papers" sub="Add new papers and remove old ones. Changes show on the Papers tab right away.">
+    <Page title="TOPIT Admin Portal" sub="Add new papers and remove old ones. Changes show on the Papers tab right away.">
       <form onSubmit={submit} className="glass mb-8 grid gap-4 rounded-3xl p-6 sm:grid-cols-2">
         <h2 className="font-display text-xl font-semibold sm:col-span-2">Add New Paper</h2>
         <label className="text-sm font-semibold">Class<select value={form.standard} onChange={set("standard")} className={`${field} mt-1`}><option value="10">10</option><option value="12">12</option></select></label>
