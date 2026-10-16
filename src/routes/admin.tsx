@@ -26,47 +26,68 @@ const empty = { standard: "10" as "10" | "12", subject: "", year: "", paper_type
 const field = "glass-soft w-full rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring";
 
 function Admin() {
-  const [pass, setPass] = useState("");
-  const [ok, setOk] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [user, setUser] = useState<{ email?: string } | null>(null);
+  const [ready, setReady] = useState(false);
+  const [signing, setSigning] = useState(false);
   const [form, setForm] = useState(empty);
   const [rows, setRows] = useState<Row[]>([]);
   const [busy, setBusy] = useState(false);
   const [view, setView] = useState<ReaderPaper | null>(null);
 
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => { setUser(data.session?.user ?? null); setReady(true); });
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => setUser(session?.user ?? null));
+    return () => sub.subscription.unsubscribe();
+  }, []);
+
   const load = useCallback(async () => {
     const { data } = await supabase.from("cbse_pyqs").select("*").order("created_at", { ascending: false });
     setRows((data as Row[]) ?? []);
   }, []);
-  useEffect(() => { if (ok) load(); }, [ok, load]);
+  useEffect(() => { if (user) load(); }, [user, load]);
 
-  const unlock = async (e: React.FormEvent) => {
+  const signIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    try { await verifyAdmin({ data: { pass } }); setOk(true); } catch { toast.error("Wrong passcode"); }
+    setSigning(true);
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    setSigning(false);
+    if (error) toast.error(error.message || "Invalid credentials");
+    else { setPassword(""); toast.success("Signed in"); }
   };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setBusy(true);
-    try {
-      await addPaper({ data: { pass, ...form } });
-      toast.success("Paper added");
-      setForm(empty);
-      load();
-    } catch (err) { toast.error((err as Error).message); }
+    const { error } = await supabase.from("cbse_pyqs").insert({
+      standard: form.standard, subject: form.subject.trim(), year: form.year.trim(), paper_type: form.paper_type,
+      set_number: form.set_number.trim() || null, paper_url: form.paper_url.trim(), solution_url: form.solution_url.trim() || null,
+    });
     setBusy(false);
+    if (error) return toast.error(error.message.includes("row-level security") ? "Your account doesn't have admin rights." : error.message);
+    toast.success("Paper added");
+    setForm(empty);
+    load();
   };
 
   const remove = async (r: Row) => {
     if (!confirm(`Delete Class ${r.standard} ${r.subject} ${r.year}?`)) return;
-    try { await deletePaper({ data: { pass, id: r.id } }); toast.success("Paper deleted"); load(); }
-    catch (err) { toast.error((err as Error).message); }
+    const { error, count } = await supabase.from("cbse_pyqs").delete({ count: "exact" }).eq("id", r.id);
+    if (error) return toast.error(error.message);
+    if (!count) return toast.error("Your account doesn't have admin rights.");
+    toast.success("Paper deleted");
+    load();
   };
 
-  if (!ok) return (
-    <Page title="TOPIT Admin Access" sub="Enter the admin passcode to manage papers.">
-      <form onSubmit={unlock} className="glass mx-auto flex max-w-sm flex-col gap-3 rounded-3xl p-6">
-        <input type="password" value={pass} onChange={(e) => setPass(e.target.value)} placeholder="Passcode" className={field} autoFocus />
-        <button className="bg-gradient-brand text-on-brand rounded-full px-5 py-2.5 text-sm font-semibold">Unlock</button>
+  if (!ready) return <Page title="TOPIT Admin Access" sub="Checking your session…"><div /></Page>;
+
+  if (!user) return (
+    <Page title="TOPIT Admin Access" sub="Sign in with your admin account to manage papers.">
+      <form onSubmit={signIn} className="glass mx-auto flex max-w-sm flex-col gap-3 rounded-3xl p-6">
+        <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" className={field} autoFocus />
+        <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" className={field} />
+        <button disabled={signing} className="bg-gradient-brand text-on-brand rounded-full px-5 py-2.5 text-sm font-semibold disabled:opacity-50">{signing ? "Signing in…" : "Sign In"}</button>
       </form>
     </Page>
   );
@@ -75,6 +96,10 @@ function Admin() {
 
   return (
     <Page title="TOPIT Admin Portal" sub="Add new papers and remove old ones. Changes show on the Papers tab right away.">
+      <div className="mb-4 flex items-center justify-end gap-3 text-sm">
+        <span className="text-muted-foreground">{user.email}</span>
+        <button onClick={() => supabase.auth.signOut()} className="glass-soft rounded-full px-4 py-1.5 font-semibold">Log Out</button>
+      </div>
       <form onSubmit={submit} className="glass mb-8 grid gap-4 rounded-3xl p-6 sm:grid-cols-2">
         <h2 className="font-display text-xl font-semibold sm:col-span-2">Add New Paper</h2>
         <label className="text-sm font-semibold">Class<select value={form.standard} onChange={set("standard")} className={`${field} mt-1`}><option value="10">10</option><option value="12">12</option></select></label>
