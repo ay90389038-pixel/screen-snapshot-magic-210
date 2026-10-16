@@ -3,8 +3,9 @@ import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Page } from "@/components/site";
 import { PaperReader, type ReaderPaper } from "@/components/PaperReader";
+import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { addPaper, deletePaper, verifyAdmin } from "@/lib/admin.functions";
+import { addPaper, checkAdmin, deletePaper } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -26,29 +27,54 @@ const empty = { standard: "10" as "10" | "12", subject: "", year: "", paper_type
 const field = "glass-soft w-full rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring";
 
 function Admin() {
-  const [pass, setPass] = useState("");
-  const [ok, setOk] = useState(false);
+  const [session, setSession] = useState<Session | null>(null);
+  const [ready, setReady] = useState(false);
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loggingIn, setLoggingIn] = useState(false);
+  const [loginError, setLoginError] = useState("");
   const [form, setForm] = useState(empty);
   const [rows, setRows] = useState<Row[]>([]);
   const [busy, setBusy] = useState(false);
   const [view, setView] = useState<ReaderPaper | null>(null);
 
+  useEffect(() => {
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setSession(s));
+    supabase.auth.getSession().then(({ data }) => { setSession(data.session); setReady(true); });
+    return () => sub.subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    setIsAdmin(null);
+    if (!session) return;
+    checkAdmin().then((r) => setIsAdmin(r.isAdmin)).catch(() => setIsAdmin(false));
+  }, [session?.user.id]);
+
   const load = useCallback(async () => {
     const { data } = await supabase.from("cbse_pyqs").select("*").order("created_at", { ascending: false });
     setRows((data as Row[]) ?? []);
   }, []);
-  useEffect(() => { if (ok) load(); }, [ok, load]);
+  useEffect(() => { if (isAdmin) load(); }, [isAdmin, load]);
 
-  const unlock = async (e: React.FormEvent) => {
+  const login = async (e: React.FormEvent) => {
     e.preventDefault();
-    try { await verifyAdmin({ data: { pass } }); setOk(true); } catch { toast.error("Wrong passcode"); }
+    setLoggingIn(true); setLoginError("");
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) { setLoginError(error.message); toast.error(error.message); }
+    setLoggingIn(false);
+  };
+
+  const logout = async () => {
+    await supabase.auth.signOut();
+    setSession(null); setRows([]); setPassword("");
   };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setBusy(true);
     try {
-      await addPaper({ data: { pass, ...form } });
+      await addPaper({ data: form });
       toast.success("Paper added");
       setForm(empty);
       load();
@@ -58,23 +84,40 @@ function Admin() {
 
   const remove = async (r: Row) => {
     if (!confirm(`Delete Class ${r.standard} ${r.subject} ${r.year}?`)) return;
-    try { await deletePaper({ data: { pass, id: r.id } }); toast.success("Paper deleted"); load(); }
+    try { await deletePaper({ data: { id: r.id } }); toast.success("Paper deleted"); load(); }
     catch (err) { toast.error((err as Error).message); }
   };
 
-  if (!ok) return (
-    <Page title="Admin" sub="Enter the admin passcode to manage papers.">
-      <form onSubmit={unlock} className="glass mx-auto flex max-w-sm flex-col gap-3 rounded-3xl p-6">
-        <input type="password" value={pass} onChange={(e) => setPass(e.target.value)} placeholder="Passcode" className={field} autoFocus />
-        <button className="bg-gradient-brand text-on-brand rounded-full px-5 py-2.5 text-sm font-semibold">Unlock</button>
+  if (!ready) return <Page title="Admin" sub="Loading…"><div /></Page>;
+
+  if (!session) return (
+    <Page title="Admin Login" sub="Sign in with your admin email and password.">
+      <form onSubmit={login} className="glass mx-auto flex max-w-sm flex-col gap-3 rounded-3xl p-6">
+        <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" className={field} autoFocus />
+        <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" className={field} />
+        {loginError && <p role="alert" className="rounded-xl bg-destructive/15 px-3 py-2 text-sm text-destructive">{loginError}</p>}
+        <button disabled={loggingIn} className="bg-gradient-brand text-on-brand rounded-full px-5 py-2.5 text-sm font-semibold disabled:opacity-50">{loggingIn ? "Signing in…" : "Sign In"}</button>
       </form>
     </Page>
+  );
+
+  const logoutBtn = (
+    <div className="mb-4 flex items-center justify-end gap-3">
+      <span className="text-sm text-muted-foreground">{session.user.email}</span>
+      <button onClick={logout} className="rounded-full bg-destructive px-4 py-2 text-sm font-semibold text-destructive-foreground">Log Out</button>
+    </div>
+  );
+
+  if (isAdmin === null) return <Page title="Admin" sub="Checking access…">{logoutBtn}</Page>;
+  if (!isAdmin) return (
+    <Page title="Admin" sub="You're signed in, but this account doesn't have admin access.">{logoutBtn}</Page>
   );
 
   const set = (k: keyof typeof empty) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setForm({ ...form, [k]: e.target.value });
 
   return (
     <Page title="Admin — CBSE Papers" sub="Add new papers and remove old ones. Changes show on the Papers tab right away.">
+      {logoutBtn}
       <form onSubmit={submit} className="glass mb-8 grid gap-4 rounded-3xl p-6 sm:grid-cols-2">
         <h2 className="font-display text-xl font-semibold sm:col-span-2">Add New Paper</h2>
         <label className="text-sm font-semibold">Class<select value={form.standard} onChange={set("standard")} className={`${field} mt-1`}><option value="10">10</option><option value="12">12</option></select></label>
