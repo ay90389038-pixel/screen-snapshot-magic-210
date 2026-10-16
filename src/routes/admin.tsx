@@ -4,7 +4,6 @@ import { toast } from "sonner";
 import { Page } from "@/components/site";
 import { PaperReader, type ReaderPaper } from "@/components/PaperReader";
 import { supabase } from "@/integrations/supabase/client";
-import { addPaper, deletePaper, verifyAdmin } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -65,7 +64,7 @@ function Admin() {
       set_number: form.set_number.trim() || null, paper_url: form.paper_url.trim(), solution_url: form.solution_url.trim() || null,
     });
     setBusy(false);
-    if (error) return toast.error(error.message.includes("row-level security") ? "Your account doesn't have admin rights." : error.message);
+    if (error) { toast.error(error.message.includes("row-level security") ? "Your account doesn't have admin rights." : error.message); return; }
     toast.success("Paper added");
     setForm(empty);
     load();
@@ -74,8 +73,8 @@ function Admin() {
   const remove = async (r: Row) => {
     if (!confirm(`Delete Class ${r.standard} ${r.subject} ${r.year}?`)) return;
     const { error, count } = await supabase.from("cbse_pyqs").delete({ count: "exact" }).eq("id", r.id);
-    if (error) return toast.error(error.message);
-    if (!count) return toast.error("Your account doesn't have admin rights.");
+    if (error) { toast.error(error.message); return; }
+    if (!count) { toast.error("Your account doesn't have admin rights."); return; }
     toast.success("Paper deleted");
     load();
   };
