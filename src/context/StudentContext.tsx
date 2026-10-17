@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { externalSupabase as supabase } from '@/integrations/supabase/externalClient';
+import { externalSupabase as supabase } from '../integrations/supabase/externalClient';
 import { User } from '@supabase/supabase-js';
 
 export interface StudentProfile {
