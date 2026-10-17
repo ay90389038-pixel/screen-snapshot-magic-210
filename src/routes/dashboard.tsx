@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { chaptersFor } from "@/lib/data";
 import { Bar, Page, Stat } from "@/components/site";
+import { useStudent } from "@/context/StudentContext";
 
 type Search = { board?: string | undefined; cls?: string | undefined; subject?: string | undefined };
 
@@ -22,20 +23,39 @@ export const Route = createFileRoute("/dashboard")({
 });
 
 function Dashboard() {
-  const { board = "CBSE", cls = "10", subject = "Science" } = Route.useSearch();
-  const chapters = chaptersFor(subject);
+  const search = Route.useSearch();
+  const { user, profile } = useStudent();
+
+  // Use student's saved profile values, fallback to URL search params, fallback to defaults
+  const activeBoard = profile?.board || search.board || "CBSE";
+  const activeClass = profile?.class_grade || search.cls || "10";
+  const activeSubject = search.subject || "Science";
+  const studentName = profile?.full_name || (user ? "Student" : "Guest Student");
+
+  const chapters = chaptersFor(activeSubject);
   const sorted = [...chapters].sort((a, b) => a.acc - b.acc);
   const weak = sorted.slice(0, 2);
   const strong = sorted.slice(-2).reverse();
 
+  // Format real accumulated study minutes into clean hours/minutes
+  const totalMinutes = profile?.total_study_minutes || 0;
+  const studyHours = Math.floor(totalMinutes / 60);
+  const studyRemainderMins = totalMinutes % 60;
+  const formattedStudyTime =
+    totalMinutes === 0
+      ? "0h"
+      : studyHours > 0
+      ? `${studyHours}h ${studyRemainderMins > 0 ? `${studyRemainderMins}m` : ""}`.trim()
+      : `${studyRemainderMins}m`;
+
   return (
-    <Page title="Your dashboard" sub={`Riya · ${board} Class ${cls} · ${subject}`}>
+    <Page title="Your dashboard" sub={`${studentName} · ${activeBoard} Class ${activeClass} · ${activeSubject}`}>
       <div className="grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-6">
-        <Stat label="Preparation" value="68%" note="▲ 9% this week" />
-        <Stat label="Accuracy" value="76%" note="▲ 3%" />
-        <Stat label="Study time" value="14h" note="this week" tone="muted" />
-        <Stat label="Solved" value="1,240" note="questions" tone="muted" />
-        <Stat label="Tests" value="18" note="completed" tone="muted" />
+        <Stat label="Preparation" value={user ? "68%" : "--"} note={user ? "▲ 9% this week" : "Sign in to track"} />
+        <Stat label="Accuracy" value={user ? "76%" : "--"} note={user ? "▲ 3%" : "Sign in to track"} />
+        <Stat label="Study time" value={formattedStudyTime} note="Total logged" tone="muted" />
+        <Stat label="Solved" value={user ? "1,240" : "0"} note="questions" tone="muted" />
+        <Stat label="Tests" value={user ? "18" : "0"} note="completed" tone="muted" />
         <Stat label="Weak topics" value={String(weak.length)} note="need drills" tone="coral" />
       </div>
 
@@ -46,13 +66,20 @@ function Dashboard() {
           <div className="mt-6 space-y-5">
             {chapters.map((c) => (
               <div key={c.name}>
-                <div className="flex justify-between text-sm font-medium"><span>{c.name}</span><span className="text-muted-foreground">{c.acc}%</span></div>
+                <div className="flex justify-between text-sm font-medium">
+                  <span>{c.name}</span>
+                  <span className="text-muted-foreground">{c.acc}%</span>
+                </div>
                 <div className="mt-2"><Bar value={c.acc} /></div>
               </div>
             ))}
           </div>
           <div className="mt-6 flex flex-wrap gap-2 text-xs">
-            {strong.map((s) => <span key={s.name} className="rounded-full bg-mint/10 px-3 py-1 font-semibold text-mint">Strong: {s.name}</span>)}
+            {strong.map((s) => (
+              <span key={s.name} className="rounded-full bg-mint/10 px-3 py-1 font-semibold text-mint">
+                Strong: {s.name}
+              </span>
+            ))}
           </div>
         </div>
 
@@ -64,14 +91,20 @@ function Dashboard() {
               <div key={w.name} className="glass-soft rounded-2xl p-4">
                 <p className="text-sm font-semibold">{i === 0 ? "⚠️" : "📌"} {w.name}</p>
                 <p className="text-xs text-muted-foreground">Accuracy {w.acc}% · Revise → Practice → Retest</p>
-                <Link to="/practice" className={`mt-3 block rounded-xl py-2 text-center text-xs font-semibold text-on-brand ${i === 0 ? "bg-coral" : "bg-amber"}`}>Start focused drill →</Link>
+                <Link to="/practice" className={`mt-3 block rounded-xl py-2 text-center text-xs font-semibold text-on-brand ${i === 0 ? "bg-coral" : "bg-amber"}`}>
+                  Start focused drill →
+                </Link>
               </div>
             ))}
-            <div className="glass-soft rounded-2xl p-4">
-              <p className="text-sm font-semibold">✅ {strong[0]!.name} quick revision</p>
-              <p className="text-xs text-muted-foreground">Lock in {strong[0]!.acc}%</p>
-              <Link to="/pyqs" className="mt-3 block rounded-xl bg-mint py-2 text-center text-xs font-semibold text-on-brand">Review PYQs →</Link>
-            </div>
+            {strong.length > 0 && (
+              <div className="glass-soft rounded-2xl p-4">
+                <p className="text-sm font-semibold">✅ {strong[0].name} quick revision</p>
+                <p className="text-xs text-muted-foreground">Lock in {strong[0].acc}%</p>
+                <Link to="/pyqs" className="mt-3 block rounded-xl bg-mint py-2 text-center text-xs font-semibold text-on-brand">
+                  Review PYQs →
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       </div>
