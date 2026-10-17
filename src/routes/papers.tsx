@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { PaperReader } from "@/components/PaperReader";
 import { CBSE_PAPERS, SUBJECTS_BY_CLASS, YEARS, type CbsePaper } from "@/data/cbsePapers";
 import { Page, Chip } from "@/components/site";
-import { supabase } from "@/integrations/supabase/client";
+import { externalSupabase } from "@/integrations/external/client";
 
 export const Route = createFileRoute("/papers")({
   head: () => ({

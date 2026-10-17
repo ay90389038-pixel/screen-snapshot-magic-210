@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Page } from "@/components/site";
 import { PaperReader, type ReaderPaper } from "@/components/PaperReader";
-import { supabase } from "@/integrations/supabase/client";
+import { externalSupabase as supabase } from "@/integrations/external/client";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
