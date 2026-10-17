@@ -4,7 +4,6 @@ import { StudentAuthModal } from "./StudentAuthModal";
 import { useStudent } from "../context/StudentContext";
 
 const NAV = [
-  { to: "/", label: "Home" },
   { to: "/dashboard", label: "Dashboard" },
   { to: "/practice", label: "Practice" },
   { to: "/pyqs", label: "PYQs" },
@@ -29,7 +28,7 @@ export function Header() {
   return (
     <header className="sticky top-4 z-30 mx-auto max-w-6xl px-4">
       <nav className="glass flex items-center justify-between rounded-full px-5 py-3">
-        <Link to="/"><Logo /></Link>
+        <Link to="/dashboard"><Logo /></Link>
         <div className="hidden items-center gap-6 text-sm font-medium text-muted-foreground lg:flex">
           {NAV.map((n) => (
             <Link key={n.to} to={n.to} activeOptions={{ exact: true }} className="hover:text-ink" activeProps={{ className: "text-brand" }}>{n.label}</Link>
