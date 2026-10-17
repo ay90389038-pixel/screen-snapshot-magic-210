@@ -1,5 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useState, type ReactNode } from "react";
+import { StudentAuthModal } from "./StudentAuthModal";
+import { useStudent } from "../context/StudentContext";
 
 const NAV = [
   { to: "/", label: "Home" },
@@ -21,6 +23,9 @@ export function Logo() {
 
 export function Header() {
   const [open, setOpen] = useState(false);
+  const [authOpen, setAuthOpen] = useState(false);
+  const { user, profile, signOut } = useStudent();
+
   return (
     <header className="sticky top-4 z-30 mx-auto max-w-6xl px-4">
       <nav className="glass flex items-center justify-between rounded-full px-5 py-3">
@@ -30,18 +35,56 @@ export function Header() {
             <Link key={n.to} to={n.to} activeOptions={{ exact: true }} className="hover:text-ink" activeProps={{ className: "text-brand" }}>{n.label}</Link>
           ))}
         </div>
-        <div className="flex items-center gap-2">
-          <Link to="/dashboard" className="rounded-full bg-gradient-brand px-5 py-2 text-sm font-semibold text-on-brand shadow-lg shadow-brand/30">Start Preparing</Link>
+        <div className="flex items-center gap-3">
+          {user ? (
+            <div className="flex items-center gap-2">
+              <span className="hidden sm:inline-block text-xs font-semibold text-foreground">
+                {profile?.full_name || 'Student'} (Class {profile?.class_grade || '10'})
+              </span>
+              <button
+                type="button"
+                onClick={() => signOut()}
+                className="rounded-full border border-border px-3 py-1.5 text-xs font-medium hover:bg-accent transition"
+              >
+                Sign Out
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setAuthOpen(true)}
+              className="rounded-full bg-gradient-brand px-4 py-1.5 text-xs font-semibold text-on-brand shadow hover:opacity-90 transition"
+            >
+              Sign In
+            </button>
+          )}
+
+          <Link to="/dashboard" className="hidden sm:inline-flex rounded-full bg-gradient-brand px-4 py-1.5 text-xs font-semibold text-on-brand shadow-lg shadow-brand/30">
+            Start Preparing
+          </Link>
+          
           <button onClick={() => setOpen(!open)} className="rounded-full px-3 py-2 text-sm font-semibold lg:hidden" aria-label="Menu">☰</button>
         </div>
       </nav>
+
       {open && (
         <div className="glass mt-2 grid gap-1 rounded-3xl p-3 lg:hidden">
           {NAV.map((n) => (
             <Link key={n.to} to={n.to} onClick={() => setOpen(false)} className="rounded-xl px-4 py-2 text-sm font-medium hover:bg-accent">{n.label}</Link>
           ))}
+          {!user && (
+            <button
+              type="button"
+              onClick={() => { setOpen(false); setAuthOpen(true); }}
+              className="mt-2 w-full rounded-xl bg-gradient-brand px-4 py-2 text-center text-sm font-semibold text-on-brand"
+            >
+              Sign In / Register
+            </button>
+          )}
         </div>
       )}
+
+      <StudentAuthModal isOpen={authOpen} onClose={() => setAuthOpen(false)} />
     </header>
   );
 }
