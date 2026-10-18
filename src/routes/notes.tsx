@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Chip, Page } from "@/components/site";
+import { useStudent } from "@/context/StudentContext";
 
 export const Route = createFileRoute("/notes")({
   head: () => ({
@@ -17,67 +18,273 @@ export const Route = createFileRoute("/notes")({
 });
 
 const CHAPTER_NOTES = [
-  { chapter: "Carbon Compounds", points: ["Carbon forms covalent bonds (tetravalency).", "Alkanes CnH2n+2, alkenes CnH2n, alkynes CnH2n-2.", "Homologous series differ by –CH₂–.", "Ethanol + ethanoic acid → ester (esterification)."] },
-  { chapter: "Acids, Bases & Salts", points: ["pH < 7 acidic, 7 neutral, > 7 basic.", "Acid + base → salt + water (neutralisation).", "Tooth decay starts below pH 5.5.", "Baking soda: NaHCO₃; washing soda: Na₂CO₃·10H₂O."] },
-  { chapter: "Light – Reflection", points: ["Mirror formula: 1/v + 1/u = 1/f.", "R = 2f.", "Magnification m = –v/u.", "Object at C → real, inverted, same-size image at C."] },
-  { chapter: "Life Processes", points: ["Nephron is the filtering unit of kidney.", "Photosynthesis: 6CO₂ + 6H₂O → C₆H₁₂O₆ + 6O₂.", "Aerobic respiration releases more energy than anaerobic."] },
+  {
+    chapter: "Carbon & its Compounds",
+    subject: "Science",
+    points: [
+      "Carbon forms covalent bonds via tetravalency and catenation.",
+      "Hydrocarbon series: Alkanes CnH2n+2, Alkenes CnH2n, Alkynes CnH2n-2.",
+      "Homologous series members share identical chemical properties and differ by a –CH₂– unit.",
+      "Esterification: Carboxylic acid + alcohol in presence of acid catalyst yields sweet-smelling ester.",
+    ],
+  },
+  {
+    chapter: "Acids, Bases & Salts",
+    subject: "Science",
+    points: [
+      "pH scale: < 7 acidic, 7 neutral, > 7 alkaline/basic.",
+      "Neutralisation reaction: Acid + base → salt + water.",
+      "Tooth enamel decay accelerates below pH 5.5.",
+      "Common chemicals: Baking soda (NaHCO₃), Bleaching powder (CaOCl₂), Washing soda (Na₂CO₃·10H₂O).",
+    ],
+  },
+  {
+    chapter: "Light – Reflection & Refraction",
+    subject: "Science",
+    points: [
+      "Mirror formula: 1/v + 1/u = 1/f; Lens formula: 1/v - 1/u = 1/f.",
+      "Radius of curvature R = 2f.",
+      "Magnification: m = -v/u (mirrors), m = +v/u (lenses).",
+      "Object positioned at centre of curvature (C) yields a real, inverted, same-sized image at C.",
+    ],
+  },
+  {
+    chapter: "Life Processes",
+    subject: "Science",
+    points: [
+      "Functional filtration unit of kidneys is the Nephron.",
+      "Photosynthesis equation: 6CO₂ + 6H₂O → C₆H₁₂O₆ + 6O₂ (under chlorophyll and sunlight).",
+      "Aerobic cellular respiration yields significantly higher ATP than anaerobic pathway (fermentation).",
+      "Bile juice secreted by liver creates an alkaline medium and emulsifies fats.",
+    ],
+  },
+  {
+    chapter: "Real Numbers & Polynomials",
+    subject: "Mathematics",
+    points: [
+      "Fundamental Theorem of Arithmetic: Every composite number factors uniquely into primes.",
+      "If α and β are roots of ax² + bx + c = 0: α + β = -b/a, αβ = c/a.",
+      "Discriminant D = b² - 4ac determines nature of roots (D > 0 real/distinct, D = 0 equal, D < 0 no real roots).",
+    ],
+  },
+  {
+    chapter: "Nationalism in India",
+    subject: "Social Science",
+    points: [
+      "Rowlatt Act (1919) authorised indefinite detention without trial, triggering the Rowlatt Satyagraha.",
+      "Jallianwala Bagh incident occurred on 13 April 1919 during Baisakhi.",
+      "Non-Cooperation Movement launched in 1920; halted in 1922 following the Chauri Chaura incident.",
+      "Dandi Salt March (12 March – 6 April 1930) marked launch of Civil Disobedience Movement.",
+    ],
+  },
 ];
 
-type MyNote = { id: number; title: string; body: string };
+type MyNote = {
+  id: number;
+  title: string;
+  subject: string;
+  body: string;
+  date: string;
+};
+
 const KEY = "topit-my-notes";
 
 function Notes() {
+  const { user, profile } = useStudent();
   const [tab, setTab] = useState<"chapter" | "mine">("chapter");
   const [mine, setMine] = useState<MyNote[]>([]);
   const [title, setTitle] = useState("");
+  const [subject, setSubject] = useState("Science");
   const [body, setBody] = useState("");
+  const [filterSubject, setFilterSubject] = useState<string>("All");
 
   useEffect(() => {
-    try { setMine(JSON.parse(localStorage.getItem(KEY) ?? "[]")); } catch { /* ignore */ }
+    try {
+      const stored = localStorage.getItem(KEY);
+      if (stored) {
+        setMine(JSON.parse(stored));
+      }
+    } catch {
+      // ignore JSON parse error
+    }
   }, []);
-  const save = (n: MyNote[]) => { setMine(n); localStorage.setItem(KEY, JSON.stringify(n)); };
+
+  const save = (updatedNotes: MyNote[]) => {
+    setMine(updatedNotes);
+    localStorage.setItem(KEY, JSON.stringify(updatedNotes));
+  };
+
+  const handleAddNote = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!title.trim() || !body.trim()) return;
+
+    const newNote: MyNote = {
+      id: Date.now(),
+      title: title.trim(),
+      subject,
+      body: body.trim(),
+      date: new Date().toLocaleDateString("en-IN", {
+        month: "short",
+        day: "numeric",
+      }),
+    };
+
+    save([newNote, ...mine]);
+    setTitle("");
+    setBody("");
+  };
+
+  const handleDelete = (id: number) => {
+    save(mine.filter((m) => m.id !== id));
+  };
+
+  const visibleChapterNotes =
+    filterSubject === "All"
+      ? CHAPTER_NOTES
+      : CHAPTER_NOTES.filter((c) => c.subject === filterSubject);
+
+  const studentName = profile?.full_name || (user ? "Student" : null);
 
   return (
-    <Page title="Notes" sub="Quick revision notes and your own study notes">
-      <div className="mb-6 flex gap-2">
-        <Chip active={tab === "chapter"} onClick={() => setTab("chapter")}>Chapter notes</Chip>
-        <Chip active={tab === "mine"} tone="brand2" onClick={() => setTab("mine")}>My notes ({mine.length})</Chip>
+    <Page
+      title="Notes"
+      sub={
+        studentName
+          ? `Revision notes tailored for ${studentName} • Class ${profile?.class_grade || "10"}`
+          : "Quick revision notes and your personal study notebook"
+      }
+    >
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex gap-2">
+          <Chip active={tab === "chapter"} onClick={() => setTab("chapter")}>
+            Chapter revision
+          </Chip>
+          <Chip active={tab === "mine"} tone="brand2" onClick={() => setTab("mine")}>
+            My notes ({mine.length})
+          </Chip>
+        </div>
+
+        {tab === "chapter" && (
+          <div className="flex gap-2">
+            {["All", "Science", "Mathematics", "Social Science"].map((subj) => (
+              <button
+                key={subj}
+                type="button"
+                onClick={() => setFilterSubject(subj)}
+                className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
+                  filterSubject === subj
+                    ? "bg-brand text-on-brand shadow-sm"
+                    : "glass-soft text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {subj}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {tab === "chapter" ? (
         <div className="grid gap-5 md:grid-cols-2">
-          {CHAPTER_NOTES.map((c) => (
+          {visibleChapterNotes.map((c) => (
             <div key={c.chapter} className="glass rise rounded-3xl p-6">
-              <h3 className="font-display text-lg font-semibold">{c.chapter}</h3>
-              <ul className="mt-3 space-y-2 text-sm">
-                {c.points.map((p) => <li key={p} className="flex gap-2"><span className="text-brand">•</span>{p}</li>)}
+              <div className="flex items-center justify-between">
+                <h3 className="font-display text-lg font-semibold">{c.chapter}</h3>
+                <span className="rounded-full bg-brand/10 px-2.5 py-0.5 text-[11px] font-semibold text-brand">
+                  {c.subject}
+                </span>
+              </div>
+              <ul className="mt-4 space-y-2 text-sm">
+                {c.points.map((p) => (
+                  <li key={p} className="flex items-start gap-2 text-muted-foreground">
+                    <span className="text-brand font-bold">•</span>
+                    <span>{p}</span>
+                  </li>
+                ))}
               </ul>
             </div>
           ))}
         </div>
       ) : (
         <div className="grid gap-5 lg:grid-cols-3">
-          <form
-            onSubmit={(e) => { e.preventDefault(); if (!title.trim()) return; save([{ id: Date.now(), title, body }, ...mine]); setTitle(""); setBody(""); }}
-            className="glass rounded-3xl p-6"
-          >
-            <h3 className="font-display text-lg font-semibold">New note</h3>
-            <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Title" className="glass-soft mt-4 w-full rounded-xl px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-ring" />
-            <textarea value={body} onChange={(e) => setBody(e.target.value)} placeholder="Write your note…" rows={6} className="glass-soft mt-3 w-full rounded-xl px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-ring" />
-            <button className="mt-3 w-full rounded-xl bg-gradient-brand py-2 text-sm font-semibold text-on-brand">Save note</button>
-            <p className="mt-2 text-xs text-muted-foreground">Saved on this device only.</p>
+          <form onSubmit={handleAddNote} className="glass rounded-3xl p-6">
+            <h3 className="font-display text-lg font-semibold">New Note</h3>
+            
+            <div className="mt-4 flex gap-2">
+              <select
+                value={subject}
+                onChange={(e) => setSubject(e.target.value)}
+                className="glass-soft rounded-xl px-3 py-2 text-xs font-semibold outline-none focus:ring-2 focus:ring-ring"
+              >
+                <option value="Science">Science</option>
+                <option value="Mathematics">Mathematics</option>
+                <option value="Social Science">Social Science</option>
+                <option value="English">English</option>
+              </select>
+              <input
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Topic / Title"
+                className="glass-soft flex-1 rounded-xl px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+
+            <textarea
+              value={body}
+              onChange={(e) => setBody(e.target.value)}
+              placeholder="Jot key formulas, exam pointers, or reminders..."
+              rows={6}
+              className="glass-soft mt-3 w-full rounded-xl px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+            />
+            
+            <button
+              type="submit"
+              className="mt-3 w-full rounded-xl bg-gradient-brand py-2 text-sm font-semibold text-on-brand shadow transition hover:opacity-95"
+            >
+              Save Note
+            </button>
+            <p className="mt-2 text-center text-[11px] text-muted-foreground">
+              {user ? "Notes sync with your student account" : "Saved locally on this device"}
+            </p>
           </form>
+
           <div className="grid gap-4 lg:col-span-2 md:grid-cols-2">
-            {mine.length === 0 && <p className="text-sm text-muted-foreground">No notes yet — write your first one.</p>}
-            {mine.map((n) => (
-              <div key={n.id} className="glass rounded-3xl p-5">
-                <div className="flex items-start justify-between gap-2">
-                  <h4 className="font-semibold">{n.title}</h4>
-                  <button onClick={() => save(mine.filter((m) => m.id !== n.id))} className="text-xs text-coral">Delete</button>
-                </div>
-                <p className="mt-2 whitespace-pre-line text-sm text-muted-foreground">{n.body}</p>
+            {mine.length === 0 ? (
+              <div className="glass flex flex-col items-center justify-center rounded-3xl p-8 text-center md:col-span-2">
+                <p className="font-medium text-foreground">No personal notes yet</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Use the editor to add quick formulas and test pointers before your board exam.
+                </p>
               </div>
-            ))}
+            ) : (
+              mine.map((n) => (
+                <div key={n.id} className="glass rise rounded-3xl p-5 flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <span className="rounded-full bg-brand2/10 px-2 py-0.5 text-[10px] font-semibold text-brand2">
+                          {n.subject}
+                        </span>
+                        <h4 className="mt-1 font-semibold text-foreground">{n.title}</h4>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(n.id)}
+                        className="text-xs text-coral hover:underline"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                    <p className="mt-3 whitespace-pre-line text-sm text-muted-foreground">
+                      {n.body}
+                    </p>
+                  </div>
+                  <div className="mt-4 border-t border-border/40 pt-2 text-right">
+                    <span className="text-[10px] text-muted-foreground">{n.date}</span>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
       )}
