@@ -2,6 +2,12 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Chip, Page } from "@/components/site";
 import { useStudent } from "@/context/StudentContext";
+import {
+  fetchStudentNotes,
+  createStudentNote,
+  deleteStudentNote,
+  type StudentNote,
+} from "@/integrations/supabase/api";
 
 export const Route = createFileRoute("/notes")({
   head: () => ({
@@ -79,63 +85,102 @@ const CHAPTER_NOTES = [
   },
 ];
 
-type MyNote = {
-  id: number;
+type LocalNote = {
+  id: string;
+  user_id?: string;
   title: string;
   subject: string;
   body: string;
-  date: string;
+  created_at: string;
 };
 
-const KEY = "topit-my-notes";
+const LOCAL_STORAGE_KEY = "topit-my-notes";
 
 function Notes() {
   const { user, profile } = useStudent();
   const [tab, setTab] = useState<"chapter" | "mine">("chapter");
-  const [mine, setMine] = useState<MyNote[]>([]);
+  const [mine, setMine] = useState<LocalNote[]>([]);
   const [title, setTitle] = useState("");
   const [subject, setSubject] = useState("Science");
   const [body, setBody] = useState("");
   const [filterSubject, setFilterSubject] = useState<string>("All");
+  const [loadingNotes, setLoadingNotes] = useState(false);
 
+  // Load notes: from Supabase if user is logged in, otherwise from localStorage
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(KEY);
-      if (stored) {
-        setMine(JSON.parse(stored));
+    async function loadNotes() {
+      if (user?.id) {
+        setLoadingNotes(true);
+        try {
+          const remoteNotes = await fetchStudentNotes(user.id);
+          setMine(remoteNotes);
+        } catch (err) {
+          console.error("Failed to load notes from Supabase:", err);
+        } finally {
+          setLoadingNotes(false);
+        }
+      } else {
+        try {
+          const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+          if (stored) {
+            setMine(JSON.parse(stored));
+          }
+        } catch {
+          // ignore parsing error
+        }
       }
-    } catch {
-      // ignore JSON parse error
     }
-  }, []);
 
-  const save = (updatedNotes: MyNote[]) => {
-    setMine(updatedNotes);
-    localStorage.setItem(KEY, JSON.stringify(updatedNotes));
-  };
+    loadNotes();
+  }, [user?.id]);
 
-  const handleAddNote = (e: React.FormEvent) => {
+  const handleAddNote = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !body.trim()) return;
 
-    const newNote: MyNote = {
-      id: Date.now(),
-      title: title.trim(),
-      subject,
-      body: body.trim(),
-      date: new Date().toLocaleDateString("en-IN", {
-        month: "short",
-        day: "numeric",
-      }),
-    };
-
-    save([newNote, ...mine]);
-    setTitle("");
-    setBody("");
+    if (user?.id) {
+      try {
+        const created = await createStudentNote({
+          user_id: user.id,
+          title: title.trim(),
+          subject,
+          body: body.trim(),
+        });
+        setMine((prev) => [created, ...prev]);
+        setTitle("");
+        setBody("");
+      } catch (err) {
+        console.error("Failed to save note to Supabase:", err);
+      }
+    } else {
+      const localNew: LocalNote = {
+        id: String(Date.now()),
+        title: title.trim(),
+        subject,
+        body: body.trim(),
+        created_at: new Date().toISOString(),
+      };
+      const updated = [localNew, ...mine];
+      setMine(updated);
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updated));
+      setTitle("");
+      setBody("");
+    }
   };
 
-  const handleDelete = (id: number) => {
-    save(mine.filter((m) => m.id !== id));
+  const handleDelete = async (id: string) => {
+    if (user?.id) {
+      try {
+        await deleteStudentNote(id);
+        setMine((prev) => prev.filter((m) => m.id !== id));
+      } catch (err) {
+        console.error("Failed to delete note from Supabase:", err);
+      }
+    } else {
+      const updated = mine.filter((m) => m.id !== id);
+      setMine(updated);
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updated));
+    }
   };
 
   const visibleChapterNotes =
@@ -209,7 +254,7 @@ function Notes() {
         <div className="grid gap-5 lg:grid-cols-3">
           <form onSubmit={handleAddNote} className="glass rounded-3xl p-6">
             <h3 className="font-display text-lg font-semibold">New Note</h3>
-            
+
             <div className="mt-4 flex gap-2">
               <select
                 value={subject}
@@ -236,7 +281,7 @@ function Notes() {
               rows={6}
               className="glass-soft mt-3 w-full rounded-xl px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
             />
-            
+
             <button
               type="submit"
               className="mt-3 w-full rounded-xl bg-gradient-brand py-2 text-sm font-semibold text-on-brand shadow transition hover:opacity-95"
@@ -244,16 +289,20 @@ function Notes() {
               Save Note
             </button>
             <p className="mt-2 text-center text-[11px] text-muted-foreground">
-              {user ? "Notes sync with your student account" : "Saved locally on this device"}
+              {user ? "☁️ Synced to your Supabase account" : "💾 Saved locally on this browser"}
             </p>
           </form>
 
           <div className="grid gap-4 lg:col-span-2 md:grid-cols-2">
-            {mine.length === 0 ? (
+            {loadingNotes ? (
+              <div className="glass flex items-center justify-center rounded-3xl p-8 text-center md:col-span-2">
+                <p className="text-sm text-muted-foreground">Loading your notes...</p>
+              </div>
+            ) : mine.length === 0 ? (
               <div className="glass flex flex-col items-center justify-center rounded-3xl p-8 text-center md:col-span-2">
                 <p className="font-medium text-foreground">No personal notes yet</p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Use the editor to add quick formulas and test pointers before your board exam.
+                  Save formulas and quick revision points here to access them on any device.
                 </p>
               </div>
             ) : (
@@ -280,14 +329,5 @@ function Notes() {
                     </p>
                   </div>
                   <div className="mt-4 border-t border-border/40 pt-2 text-right">
-                    <span className="text-[10px] text-muted-foreground">{n.date}</span>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-      )}
-    </Page>
-  );
-}
+                    <span className="text-[10px] text-muted-foreground">
+                      {new Date(n.created_at).toLocaleDateString("en-IN", {
